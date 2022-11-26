@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\code\ImageCompareAPITest\.venv
+set VIRTUAL_ENV=C:\code\next-2022.2-api-only-m2\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

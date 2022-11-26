@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 from model import Images
+from PIL import Image
 # import schema
 import os
 
@@ -16,6 +17,13 @@ def add_new_image(db: Session, file: UploadFile):
     with open(file_location, "wb+") as file_object:
         file_object.write(file.file.read())
 
+    try:
+        img = Image.open(f"images/{file.filename}")
+        img.verify()
+    except Exception as e:
+        os.remove(f"images\\{file.filename}")
+        raise HTTPException(status_code=400, detail="Arquivo corrompido")
+
     img_name = Images(
         image_name=file.filename
     )
@@ -27,7 +35,7 @@ def add_new_image(db: Session, file: UploadFile):
         name_id = value
 
     old_name = f"images\\{file.filename}"
-    new_name = f"images\\{name_id}.png"
+    new_name = f"images\\{name_id}.jpeg"
 
     os.rename(old_name, new_name)
 
@@ -40,7 +48,7 @@ def delete_image_by_id(db: Session, sl_id: int):
         db.query(Images).filter(Images.id == sl_id).delete()
         db.commit()
 
-        os.remove(f"images\\{sl_id}.png")
+        os.remove(f"images\\{sl_id}.jpeg")
     except Exception as e:
         raise Exception(e)
 

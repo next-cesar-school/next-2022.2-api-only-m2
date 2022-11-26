@@ -18,8 +18,6 @@ def get_images(db: Session, skip: int = 0, limit: int = 100):
 
 def add_new_image(db: Session, file: UploadFile):
 
-    directory = "images/"
-
     save_and_validate_image(file, directory=imagesdir)
 
     img_name = Images(
@@ -68,11 +66,10 @@ def get_similar_image(db: Session, file: UploadFile):
                 similar_file = image_file
 
     number_l = [int(s) for s in re.findall(r'\b\d+\b', similar_file)]
-    id_number = number_l[0]
 
     clear_compare()
 
-    return get_image_by_id(db=db, sl_id=id_number)
+    return get_image_by_id(db=db, sl_id=number_l[0])
 
 
 def delete_image_by_id(db: Session, sl_id: int):

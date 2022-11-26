@@ -1,9 +1,15 @@
+import os
+import glob
+import re
 from sqlalchemy.orm import Session
 from fastapi import UploadFile, HTTPException
 from model import Images
 from PIL import Image
+from imagehash import whash
 # import schema
-import os
+
+imagesdir = "images/"
+comaparedir = "compare/"
 
 
 def get_images(db: Session, skip: int = 0, limit: int = 100):
@@ -13,16 +19,9 @@ def get_images(db: Session, skip: int = 0, limit: int = 100):
 
 def add_new_image(db: Session, file: UploadFile):
 
-    file_location = f"images/{file.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(file.file.read())
+    directory = "images/"
 
-    try:
-        img = Image.open(f"images/{file.filename}")
-        img.verify()
-    except Exception as e:
-        os.remove(f"images\\{file.filename}")
-        raise HTTPException(status_code=400, detail="Arquivo corrompido")
+    save_and_validate_image(file, directory=imagesdir)
 
     img_name = Images(
         image_name=file.filename
@@ -34,12 +33,47 @@ def add_new_image(db: Session, file: UploadFile):
     for value in db.query(Images.id).distinct().order_by(Images.id.desc()).first():
         name_id = value
 
-    old_name = f"images\\{file.filename}"
-    new_name = f"images\\{name_id}.jpeg"
+    rename_image(file=file, new=name_id, directory=imagesdir)
 
-    os.rename(old_name, new_name)
+    return {"status": "Imagem enviada com sucesso"}
 
-    return {"status": "image saved"}
+
+def get_image_by_id(db: Session, sl_id: int):
+
+    return db.query(Images).filter(Images.id == sl_id).first()
+
+
+def get_similar_image(db: Session, file: UploadFile):
+
+    save_and_validate_image(file=file, directory=comaparedir)
+    rename_image(file=file, new="temp", directory=comaparedir)
+
+    if [f for f in os.listdir(imagesdir) if f.endswith(".jpeg")] == []:
+        clear_compare()
+        raise HTTPException(
+            status_code=400, detail="O banco de imagens está vazio")
+
+    hash_model = whash(Image.open(f"{comaparedir}temp.jpeg"))
+    size = len(hash_model)
+    more_similar = 0
+    similar_file = None
+
+    for image_file in os.listdir(imagesdir):
+        if image_file.endswith(".jpeg"):
+            hash_c = 100 - \
+                (((hash_model -
+                 whash(Image.open(f"{imagesdir}{image_file}"))) / size) * 100)
+
+            if hash_c > more_similar:
+                more_similar = hash_c
+                similar_file = image_file
+
+    number_l = [int(s) for s in re.findall(r'\b\d+\b', similar_file)]
+    id_number = number_l[0]
+
+    clear_compare()
+
+    return get_image_by_id(db=db, sl_id=id_number)
 
 
 def delete_image_by_id(db: Session, sl_id: int):
@@ -53,29 +87,50 @@ def delete_image_by_id(db: Session, sl_id: int):
         raise Exception(e)
 
 
-def get_image_by_id(db: Session, sl_id: int):
+def compare_two_images(files: list[UploadFile]):
 
-    return db.query(Images).filter(Images.id == sl_id).first()
+    count = 1
+    for file in files:
+        save_and_validate_image(file, directory=comaparedir)
+        rename_image(file=file, new=f"temp{count}", directory=comaparedir)
+        count += 1
+    count = 1
 
-    # def delete_image_by_id(db: Session, sl_id: int):
+    first_hash = whash(Image.open(f"{comaparedir}temp1.jpeg"))
+    second_hash = whash(Image.open(f"{comaparedir}temp2.jpeg"))
+    size = len(first_hash)
 
-    #     try:
-    #         db.query(model.Images).filter(model.Images.id == sl_id).delete()
-    #         db.commit()
-    #     except Exception as e:
-    #         raise Exception(e)
+    similarity = 100 - (((first_hash - second_hash) / size) * 100)
 
-    # def add_new_image(db: Session, image: schema.ImageAdd):
+    clear_compare()
 
-    #     details = model.Images(
-    #         image_name=image.image_name,
-    #         image_hash=image.image_hash,
-    #         binary=image.binary
-    #     )
-    #     db.add(details)
-    #     db.commit()
-    #     db.refresh(details)
+    return {"resultados": f"As imagens são {similarity}% semelhantes"}
 
-    #     db.identity_key
 
-    #     return model.Images(**image.dict())
+def save_and_validate_image(file: UploadFile, directory: str):
+
+    file_location = f"{directory}{file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(file.file.read())
+
+    try:
+        img = Image.open(file_location)
+        img.verify()
+    except Exception:
+        os.remove(file_location)
+        clear_compare()
+        raise HTTPException(status_code=400, detail="Arquivo corrompido")
+
+
+def rename_image(file: UploadFile, new, directory: str):
+
+    old_name = f"{directory}{file.filename}"
+    new_name = f"{directory}{new}.jpeg"
+
+    os.rename(old_name, new_name)
+
+
+def clear_compare():
+    for filename in os.listdir(comaparedir):
+        if filename.endswith(".jpeg"):
+            os.remove(os.path.join(comaparedir, filename))

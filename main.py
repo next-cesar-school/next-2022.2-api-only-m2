@@ -28,8 +28,14 @@ async def get_all_images(skip: int = 0, limit: int = 100, db: Session = Depends(
 
 
 @app.post("/add_new_image")
-async def add_new_image(image: UploadFile, db: Session = Depends(get_db)):
-    return crud.add_new_image(db=db, file=image)
+async def add_new_image(file: UploadFile, db: Session = Depends(get_db)):
+
+    if not file.content_type == "image/jpeg":
+        raise HTTPException(
+            status_code=400, detail="Extensão de arquivo inválida."
+        )
+
+    return crud.add_new_image(db=db, file=file)
 
 
 @app.delete("/delete_image_by_id")

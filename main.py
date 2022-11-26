@@ -1,5 +1,3 @@
-# from typing import List
-
 from fastapi import Depends, FastAPI, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
@@ -30,10 +28,7 @@ async def get_all_images(skip: int = 0, limit: int = 100, db: Session = Depends(
 @app.post("/add_new_image")
 async def add_new_image(file: UploadFile, db: Session = Depends(get_db)):
 
-    if not file.content_type == "image/jpeg":
-        raise HTTPException(
-            status_code=400, detail="Extensão de arquivo inválida."
-        )
+    extension_verifier(file=file)
 
     return crud.add_new_image(db=db, file=file)
 
@@ -41,11 +36,16 @@ async def add_new_image(file: UploadFile, db: Session = Depends(get_db)):
 @app.post("/get_similar_image", response_model=schema.Image)
 def get_similar_image(file: UploadFile, db: Session = Depends(get_db)):
 
+    extension_verifier(file=file)
+
     return crud.get_similar_image(db=db, file=file)
 
 
 @app.post("/compare_two_images")
 def compare_two_images(files: list[UploadFile]):
+
+    for file in files:
+        extension_verifier(file=file)
 
     return crud.compare_two_images(files=files)
 
@@ -55,14 +55,22 @@ def delete_image_by_id(sl_id: int, db: Session = Depends(get_db)):
     details = crud.get_image_by_id(db=db, sl_id=sl_id)
     if not details:
         raise HTTPException(
-            status_code=404, detail=f"No record found to delete")
+            status_code=404, detail=f"Imagem não encontrada para ser removida")
 
     try:
         crud.delete_image_by_id(db=db, sl_id=sl_id)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Unable to delete: {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Erro na remoção da imagem: {e}")
 
-    return {"delete status": "success"}
+    return {"status": "Imagem removida com sucesso"}
+
+
+def extension_verifier(file: UploadFile):
+    if not file.content_type == "image/jpeg":
+        raise HTTPException(
+            status_code=400, detail="Extensão de arquivo inválida."
+        )
 
 
 # Adicionar lógica para válidação de arquivos

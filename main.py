@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 import crud
@@ -33,12 +34,12 @@ async def add_new_image(file: UploadFile, db: Session = Depends(get_db)):
     return crud.add_new_image(db=db, file=file)
 
 
-@app.post("/get_similar_image", response_model=schema.Image)
-def get_similar_image(file: UploadFile, db: Session = Depends(get_db)):
+@app.post("/get_similar_image", response_class=FileResponse)
+def get_similar_image(file: UploadFile):
 
     extension_verifier(file=file)
 
-    return crud.get_similar_image(db=db, file=file)
+    return crud.get_similar_image(file=file)
 
 
 @app.post("/compare_two_images")

@@ -1,10 +1,10 @@
-import os
-import re
+from os import rename, remove, listdir, path
 from sqlalchemy.orm import Session
 from fastapi import UploadFile, HTTPException
 from model import Images
 from PIL import Image
 from imagehash import whash
+from shutil import move
 # import schema
 
 imagesdir = "images/"
@@ -18,7 +18,7 @@ def get_images(db: Session, skip: int = 0, limit: int = 100):
 
 def add_new_image(db: Session, file: UploadFile):
 
-    save_and_validate_image(file, directory=imagesdir)
+    save_and_validate_image(file, directory=comaparedir)
 
     img_name = Images(
         image_name=file.filename
@@ -30,7 +30,9 @@ def add_new_image(db: Session, file: UploadFile):
     for value in db.query(Images.id).distinct().order_by(Images.id.desc()).first():
         name_id = value
 
-    rename_image(file=file, new=name_id, directory=imagesdir)
+    rename_image(file=file, new=name_id)
+
+    move(f"{comaparedir}{name_id}.jpeg", f"{imagesdir}{name_id}.jpeg")
 
     return {"status": "Imagem enviada com sucesso"}
 
@@ -40,12 +42,12 @@ def get_image_by_id(db: Session, sl_id: int):
     return db.query(Images).filter(Images.id == sl_id).first()
 
 
-def get_similar_image(db: Session, file: UploadFile):
+def get_similar_image(file: UploadFile):
 
     save_and_validate_image(file=file, directory=comaparedir)
-    rename_image(file=file, new="temp", directory=comaparedir)
+    rename_image(file=file, new="temp")
 
-    if [f for f in os.listdir(imagesdir) if f.endswith(".jpeg")] == []:
+    if [f for f in listdir(imagesdir) if f.endswith(".jpeg")] == []:
         clear_compare()
         raise HTTPException(
             status_code=400, detail="O banco de imagens está vazio")
@@ -55,7 +57,7 @@ def get_similar_image(db: Session, file: UploadFile):
     more_similar = 0
     similar_file = None
 
-    for image_file in os.listdir(imagesdir):
+    for image_file in listdir(imagesdir):
         if image_file.endswith(".jpeg"):
             hash_c = 100 - \
                 (((hash_model -
@@ -65,11 +67,8 @@ def get_similar_image(db: Session, file: UploadFile):
                 more_similar = hash_c
                 similar_file = image_file
 
-    number_l = [int(s) for s in re.findall(r'\b\d+\b', similar_file)]
-
     clear_compare()
-
-    return get_image_by_id(db=db, sl_id=number_l[0])
+    return f"{imagesdir}{similar_file}"
 
 
 def delete_image_by_id(db: Session, sl_id: int):
@@ -78,7 +77,7 @@ def delete_image_by_id(db: Session, sl_id: int):
         db.query(Images).filter(Images.id == sl_id).delete()
         db.commit()
 
-        os.remove(f"images\\{sl_id}.jpeg")
+        remove(f"images\\{sl_id}.jpeg")
     except Exception as e:
         raise Exception(e)
 
@@ -88,7 +87,7 @@ def compare_two_images(files: list[UploadFile]):
     count = 1
     for file in files:
         save_and_validate_image(file, directory=comaparedir)
-        rename_image(file=file, new=f"temp{count}", directory=comaparedir)
+        rename_image(file=file, new=f"temp{count}")
         count += 1
     count = 1
 
@@ -113,20 +112,20 @@ def save_and_validate_image(file: UploadFile, directory: str):
         img = Image.open(file_location)
         img.verify()
     except Exception:
-        os.remove(file_location)
+        remove(file_location)
         clear_compare()
         raise HTTPException(status_code=400, detail="Arquivo corrompido")
 
 
-def rename_image(file: UploadFile, new, directory: str):
+def rename_image(file: UploadFile, new):
 
-    old_name = f"{directory}{file.filename}"
-    new_name = f"{directory}{new}.jpeg"
+    old_name = f"{comaparedir}{file.filename}"
+    new_name = f"{comaparedir}{new}.jpeg"
 
-    os.rename(old_name, new_name)
+    rename(old_name, new_name)
 
 
 def clear_compare():
-    for filename in os.listdir(comaparedir):
+    for filename in listdir(comaparedir):
         if filename.endswith(".jpeg"):
-            os.remove(os.path.join(comaparedir, filename))
+            remove(path.join(comaparedir, filename))

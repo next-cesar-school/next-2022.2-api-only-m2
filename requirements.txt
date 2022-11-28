@@ -1,0 +1,7 @@
+fastapi==0.87.0
+uvicorn==0.20.0
+sqlalchemy==1.4.44
+ImageHash==4.3.1
+Pillow==9.3.0
+python-multipart==0.0.5
+autopep8==2.0.0

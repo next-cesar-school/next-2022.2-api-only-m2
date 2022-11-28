@@ -1,22 +1,19 @@
-from typing import Optional
 from pydantic import BaseModel
+
+# Criação de modelos de squema que podem ser usados para salvar
+# detalhes de imagens no banco de dados e enviar respostas ao
+# usuário
 
 
 class ImageBase(BaseModel):
     image_name: str
-    
 
 
-class ImageAdd(ImageBase):
-    image_hash: str
-    binary: str
+class ImageRequest(ImageBase):
+    ...
 
 
-    class Config:
-        orm_mode = True
-
-
-class Image(ImageAdd):
+class ImageResponse(ImageRequest):
     id: int
 
     class Config:

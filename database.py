@@ -2,6 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+# Criação do banco de dados e de uma engine usada pela
+# aplicação para realizar as operações CRUD
+
 SQLALCHEMY_DATABASE_URL = "sqlite:///./image_database.db3"
 
 engine = create_engine(

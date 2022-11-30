@@ -1,2 +1,4 @@
-# next-2022.2-api-only-m2
-Projeto Next - API de comparações de imagens
+# IMAGEKEEP
+
+## Descrição do Projeto 
+<p align=”center”>Criação de um serviço que realiza o armazenamento e a comparação de imagens, identificando similaridades.</p>

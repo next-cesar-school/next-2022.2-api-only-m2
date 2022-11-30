@@ -31,7 +31,7 @@ Além disto é bom ter um editor para trabalhar com o código como [VSCode](http
 
 ```bash
 # Clone este repositório
-$ git clone <https://github.com/tgmarinho/nlw1>
+$ git clone <https://github.com/next-cesar-school/next-2022.2-api-only-m2.git>
 
 # Acesse a pasta do projeto no terminal/cmd
 $ cd nlw1
@@ -45,4 +45,4 @@ $ npm install
 # Execute a aplicação em modo de desenvolvimento
 $ npm run dev:server
 
-# O servidor inciará na porta:3333 - acesse <http://localhost:3333>
+# O servidor inciará na porta:8000 - acesse <http://localhost:8000>

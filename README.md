@@ -34,17 +34,20 @@ Além disto é bom ter um editor para trabalhar com o código como [VSCode](http
 $ git clone <https://github.com/next-cesar-school/next-2022.2-api-only-m2.git>
 
 # Acesse a pasta do projeto no terminal/cmd
-$ cd nlw1
+$ cd next-2022.2-api-only-m2
 
-# Vá para a pasta server
-$ cd server
+# Crie um ambiente virtual
+$ python -m venv .venv
+
+# Ative o ambiente virtual
+$ source venv/Scripts/activate
 
 # Instale as dependências
-$ npm install
+$ pip install -r requirements.txt
 
-# Execute a aplicação em modo de desenvolvimento
-$ npm run dev:server
+# Inicie a aplicação
+$ uvicorn main:app --reload
 
-# O servidor inciará na porta:8000 - acesse <http://localhost:8000>
+# O servidor inciará na porta:8000 - acesse <http://localhost:8000/docs>
 
 

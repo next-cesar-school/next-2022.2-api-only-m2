@@ -50,4 +50,5 @@ $ uvicorn main:app --reload
 
 # O servidor inciará na porta:8000 - acesse <http://localhost:8000/docs>
 
-
+# Para sair do ambiente virtual
+$ deactivate
